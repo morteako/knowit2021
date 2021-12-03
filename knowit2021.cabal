@@ -20,9 +20,14 @@ extra-source-files:
 executable knowit2021
   main-is: Main.hs
   other-modules:
+      Day01
+      Day02
       Paths_knowit2021
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
+    , containers
+    , gps
+    , split
   default-language: Haskell2010
