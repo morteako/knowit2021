@@ -19,6 +19,8 @@ dependencies:
   - extra
   - lens
   - linear
+  - parsec
+  - multiset
 
 executables:
   knowit2021:
