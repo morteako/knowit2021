@@ -21,6 +21,9 @@ dependencies:
   - linear
   - parsec
   - multiset
+  - mtl
+  - text
+  - lens-regex-pcre
 
 executables:
   knowit2021:

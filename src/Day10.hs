@@ -1,5 +1,6 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Day10 where
 
@@ -10,7 +11,8 @@ import Data.List.Extra
 import qualified Data.Map as Map
 import Data.Monoid
 import qualified Data.Set as Set
-import Linear
+import Debug.Trace
+import Linear hiding (trace)
 
 findPoss sizeLim = 1
 
@@ -20,8 +22,11 @@ allXY = (V2 <$> [0 .. 2] <*> [0 .. 2])
 -- ns :: Map.Map (V2 Integer) ([V2 Integer], [V2 Integer])
 ns = Map.fromList $ fmap (\v -> (v, neighs v)) allXY
 
-neighs xy = (filter isOK oneSteps, filter (isOK . snd) neighs)
+traceLab s x = trace (s ++ ": " ++ show x) x
+
+neighs xy = (filter isOK oneSteps, filter is2OK neighs)
   where
+    is2OK (mid, t) = elem mid allXY && isOK t
     isOK = flip elem allXY
     oneSteps = delete xy allXY \\ fmap snd neighs
     neighs = drop 1 $ do
@@ -29,25 +34,28 @@ neighs xy = (filter isOK oneSteps, filter (isOK . snd) neighs)
         y <- [0, (-1), 1]
         pure $ (xy + (V2 x y), xy + (2 * (V2 x y)))
 
+-- findPassList cur n m | trace ("! " ++ show cur ++ " - " ++ show m) False = undefined
 findPassList cur 0 m = [[cur]]
 findPassList cur n m | null m = []
-findPassList cur n m = foldMap goOne vaidOnes <> foldMap goSkip twos
+findPassList cur n m = foldMap goOne vaidOnes <> foldMap (goOne . snd) vaidTwos
   where
-    goOne t = map (cur :) $ findPassList t (n -1) (Map.delete t m)
+    goOne t = map (cur :) $ findPassList t (n -1) (Set.delete t m)
 
-    goSkip (mid, t) | Map.notMember mid m = goOne t
-    goSkip (mid, t) = []
+    -- goSkip (mid, t) | Map.notMember mid m = goOne t
+    -- goSkip (mid, t) = []
 
-    vaidOnes = filter (flip Map.member m) ones
+    vaidOnes = filter (flip Set.member m) ones
 
-    vaidTwos = filter (flip Map.member m . snd) twos
+    vaidTwos = filter checkTwo twos
+
+    checkTwo (mid, t) = Set.notMember mid m && Set.member t m
 
     (ones, twos) = ns Map.! cur
 
-solve cur lim = length $ f m
+solve (traceLab "startCur" -> cur) lim = length $ f $ traceLab "startM" m
   where
     f = fmap (map pretty . checkUniq) . findPassList cur (lim -1)
-    m = (Map.delete cur $ Map.fromList $ map (,()) allXY)
+    m = (Set.delete cur $ Set.fromList allXY)
 
 checkUniq xs = if length xs == length (nubOrd xs) then xs else error $ show xs
 
@@ -70,6 +78,8 @@ run = do
 
     -- print $ neighs 0
 
-    print $ solve (V2 0 2) 3
+    -- print $ solve (V2 0 2) 3
 
     print $ map (flip solve 8) allXY
+    -- print $ solve (V2 0 2) 8
+    print $ ns
